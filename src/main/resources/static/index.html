@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Kanban Board</title>
+  <style>body{font-family:Arial,sans-serif;background:#f7f7fb;margin:0}main{max-width:1000px;margin:auto;padding:32px}.columns{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.col{background:white;border:1px solid #ddd;border-radius:8px;padding:16px;min-height:220px}.card{background:#eef4ff;border-left:4px solid #2463eb;padding:10px;margin:8px 0}button{padding:9px 12px;background:#2463eb;color:white;border:0;border-radius:6px}input,select{padding:9px}@media(max-width:760px){.columns{grid-template-columns:1fr}}</style>
+</head>
+<body><main>
+  <h1>Smart Kanban Board</h1>
+  <input id="cardTitle" placeholder="New card"><input id="label" placeholder="label"><button onclick="createCard()">Add</button>
+  <div class="columns" id="board"></div>
+</main>
+<script>
+const cols=['BACKLOG','IN_PROGRESS','DONE'];
+async function api(url, options){ const res = await fetch(url, options); return res.json(); }
+async function load(){ const cards=await api('/api/cards'); board.innerHTML=cols.map(c=>`<section class="col"><h2>${c}</h2>${cards.filter(x=>x.column===c).map(x=>`<div class="card"><b>${x.title}</b><br>${x.label}<br><select onchange="moveCard('${x.id}',this.value)">${cols.map(col=>`<option ${col===x.column?'selected':''}>${col}</option>`).join('')}</select></div>`).join('')}</section>`).join(''); }
+async function createCard(){ await api('/api/cards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:cardTitle.value,label:label.value||'general'})}); cardTitle.value=''; label.value=''; load(); }
+async function moveCard(id,column){ await api(`/api/cards/${id}/move`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({column})}); load(); }
+load();
+</script></body></html>
